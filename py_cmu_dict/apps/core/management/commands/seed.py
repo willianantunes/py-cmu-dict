@@ -4,6 +4,7 @@ import os
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from py_cmu_dict.apps.core.models import Dictionary
 from py_cmu_dict.support.file_utils import number_of_lines
 
 logger = logging.getLogger(__name__)
@@ -19,18 +20,20 @@ class Command(BaseCommand):
         self.cmu_file_location = options["cmu_file_location"]
 
         number_of_entries = number_of_lines(self.cmu_file_location)
-        logger.info(f"Number of entries: {number_of_entries}")
+        self.stdout.write(f"Number of entries: {number_of_entries}")
 
-        if number_of_entries == UserJsmInEvoxTemp.objects.count():
-            logger.info(f"No need to fill table from CSV")
+        if number_of_entries <= Dictionary.objects.count():
+            self.stdout.write("No need to fill the table!")
         else:
-            batch_size = int(os.getenv("TMP_DJ_BATCH_SIZE", 1000))
-            logger.info(f"Creating users from EVOX...")
-            dto_generator = _translation_to_dtos(file_users_jsm_in_evox)
-            for dtos in chunker(dto_generator, 1000):
-                with transaction.atomic():
-                    UserJsmInEvoxTemp.objects.bulk_create(dtos, batch_size)
-            logger.info(f"Total entries created: {UserJsmInEvoxTemp.objects.count()}")
+            self.stdout.write("I am supposed to fill it, but well...")
+            raise NotImplementedError
+            # batch_size = int(os.getenv("TMP_DJ_BATCH_SIZE", 1000))
+            # logger.info(f"Creating users from EVOX...")
+            # dto_generator = _translation_to_dtos(file_users_jsm_in_evox)
+            # for dtos in chunker(dto_generator, 1000):
+            #     with transaction.atomic():
+            #         UserJsmInEvoxTemp.objects.bulk_create(dtos, batch_size)
+            # logger.info(f"Total entries created: {UserJsmInEvoxTemp.objects.count()}")
 
         # for user_in_evox in UserJsmInEvoxTemp.select():
         #     user_data = UserData.objects.filter(metadata__cpf=user_in_evox.cpf).first()
