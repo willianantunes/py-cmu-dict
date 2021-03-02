@@ -1,11 +1,15 @@
 import logging
 import os
+import re
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from py_cmu_dict.apps.core.management.commands.exceps import MoreVariantsThanWhatIsSupportedException
 from py_cmu_dict.apps.core.models import Dictionary
+from py_cmu_dict.support.file_utils import each_line_from_file
 from py_cmu_dict.support.file_utils import number_of_lines
+from py_cmu_dict.support.text_utils import strip_left_and_right_sides
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +29,9 @@ class Command(BaseCommand):
         if number_of_entries <= Dictionary.objects.count():
             self.stdout.write("No need to fill the table!")
         else:
-            self.stdout.write("I am supposed to fill it, but well...")
-            raise NotImplementedError
-            # batch_size = int(os.getenv("TMP_DJ_BATCH_SIZE", 1000))
-            # logger.info(f"Creating users from EVOX...")
-            # dto_generator = _translation_to_dtos(file_users_jsm_in_evox)
+            self.stdout.write("Translating to DTOs...")
+            dtos_generator = _translation_to_dtos(self.cmu_file_location)
+            assert list(dtos_generator) == 3
             # for dtos in chunker(dto_generator, 1000):
             #     with transaction.atomic():
             #         UserJsmInEvoxTemp.objects.bulk_create(dtos, batch_size)
@@ -73,17 +75,30 @@ class Command(BaseCommand):
 #         logger.info(f"Total entries created: {UserJsmInEvoxTemp.objects.count()}")
 #
 #
-# def _translation_to_dtos(absolute_file_name):
-#     for row in each_row_from_file(absolute_file_name):
-#         user_id_ref, cpf, username = (
-#             strip_left_and_right_side(row[1]),
-#             strip_left_and_right_side(row[0].split("@")[0]),
-#             strip_left_and_right_side(row[0]),
-#         )
-#         params = {
-#             "id_ref": user_id_ref.replace(" ", ""),
-#             "cpf": cpf.replace(" ", ""),
-#             "username": username.replace(" ", ""),
-#         }
-#         dto = UserJsmInEvoxTemp(**params)
-#         yield dto
+def _translation_to_dtos(absolute_file_name):
+    regex_for_variant = r"(\([0-9]\))"
+    for line in each_line_from_file(absolute_file_name):
+        cleaned_line = strip_left_and_right_sides(line.lower())
+        word, phoneme = cleaned_line.split("  ")
+        matches = list(re.finditer(regex_for_variant, word))
+
+        if not matches:
+            yield Dictionary(
+                word_or_symbol=word, phoneme=phoneme, classification=Dictionary.WordClassification.UNDEFINED_1
+            )
+        else:
+            match = matches[0]
+            mark_that_was_matched = match.group()
+
+            if "1" in mark_that_was_matched:
+                classification = Dictionary.WordClassification.UNDEFINED_2
+            elif "2" in mark_that_was_matched:
+                classification = Dictionary.WordClassification.UNDEFINED_3
+            elif "3" in mark_that_was_matched:
+                classification = Dictionary.WordClassification.UNDEFINED_4
+            else:
+                raise MoreVariantsThanWhatIsSupportedException
+
+            word_without_variant_number = word[0 : match.start()]
+
+            yield Dictionary(word_or_symbol=word_without_variant_number, phoneme=phoneme, classification=classification)

@@ -8,7 +8,7 @@ def create_dictionary(
     phoneme=None,
     phonemic=None,
     phonetic=None,
-    classification=Dictionary.WordClassification.UNDEFINED,
+    classification=Dictionary.WordClassification.UNDEFINED_1,
 ):
     return Dictionary.objects.create(
         word_or_symbol=word_or_symbol,

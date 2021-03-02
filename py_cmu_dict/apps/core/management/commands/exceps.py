@@ -1,0 +1,2 @@
+class MoreVariantsThanWhatIsSupportedException(Exception):
+    pass

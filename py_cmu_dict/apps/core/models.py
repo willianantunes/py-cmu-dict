@@ -29,7 +29,10 @@ class Dictionary(StandardModelMixin):
         CONJUNCTION = "CONJUNCTION", "Conjunction"
         INTERJECTION = "INTERJECTION", "Interjection"
         SYMBOL = "SYMBOL", "Symbol"
-        UNDEFINED = "UNDEFINED", "Undefined"
+        UNDEFINED_1 = "UNDEFINED_1", "Undefined version 1"
+        UNDEFINED_2 = "UNDEFINED_2", "Undefined version 2"
+        UNDEFINED_3 = "UNDEFINED_3", "Undefined version 3"
+        UNDEFINED_4 = "UNDEFINED_4", "Undefined version 4"
 
     language = models.ForeignKey(Language, on_delete=models.CASCADE, related_name="dictionary_entries")
     classification = models.CharField(
@@ -37,7 +40,7 @@ class Dictionary(StandardModelMixin):
         null=False,
         blank=False,
         choices=WordClassification.choices,
-        default=WordClassification.UNDEFINED,
+        default=WordClassification.UNDEFINED_1,
     )
     # https://en.wikipedia.org/wiki/Longest_word_in_English
     # Sample word: Pneumonoultramicroscopicsilicovolcanoconiosis
@@ -47,3 +50,10 @@ class Dictionary(StandardModelMixin):
     # Phonemic is the hypothetical sounds and phonetics is the actual production of them
     phonemic = models.CharField(max_length=100, null=True, blank=True, verbose_name="Phonemic transcription")
     phonetic = models.CharField(max_length=100, null=True, blank=True, verbose_name="Phonetic transcription")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["language", "classification", "word_or_symbol"], name="unique_linguistic_set"
+            )
+        ]
