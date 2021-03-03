@@ -62,6 +62,7 @@ class CMUDatabaseHandler:
 
     def retrieve_lines(self) -> Generator[CMULine, None, None]:
         for line in each_line_from_file(self.database_file_location):
+            # Only words are supported for now. Symbols maybe in the future...
             if not re.match("^[a-zA-Z]", line):
                 continue
             yield self.extract_data(line)

@@ -20,3 +20,10 @@ def test_should_count_syllables_for_arpanet_phonemes_scenario_3():
     number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_sold)
 
     assert number_of_syllables == 1
+
+
+def test_should_count_syllables_for_arpanet_phonemes_scenario_4():
+    phonemes_for_word_caramel = ["k", "eh1", "r", "ah0", "m", "ah0", "l"]
+    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_caramel)
+
+    assert number_of_syllables == 3
