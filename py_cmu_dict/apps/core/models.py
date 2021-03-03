@@ -19,6 +19,12 @@ class Language(StandardModelMixin):
 
 
 class Dictionary(StandardModelMixin):
+    class Version(models.TextChoices):
+        V_1 = "V_1", "Version 1"
+        V_2 = "V_2", "Version 2"
+        V_3 = "V_3", "Version 3"
+        V_4 = "V_4", "Version 4"
+
     class WordClassification(models.TextChoices):
         NOUN = "NOUN", "Noun"
         PRONOUN = "PRONOUN", "Pronoun"
@@ -29,10 +35,7 @@ class Dictionary(StandardModelMixin):
         CONJUNCTION = "CONJUNCTION", "Conjunction"
         INTERJECTION = "INTERJECTION", "Interjection"
         SYMBOL = "SYMBOL", "Symbol"
-        UNDEFINED_1 = "UNDEFINED_1", "Undefined version 1"
-        UNDEFINED_2 = "UNDEFINED_2", "Undefined version 2"
-        UNDEFINED_3 = "UNDEFINED_3", "Undefined version 3"
-        UNDEFINED_4 = "UNDEFINED_4", "Undefined version 4"
+        UNDEFINED = "UNDEFINED", "Undefined"
 
     language = models.ForeignKey(Language, on_delete=models.CASCADE, related_name="dictionary_entries")
     classification = models.CharField(
@@ -40,7 +43,14 @@ class Dictionary(StandardModelMixin):
         null=False,
         blank=False,
         choices=WordClassification.choices,
-        default=WordClassification.UNDEFINED_1,
+        default=WordClassification.UNDEFINED,
+    )
+    version = models.CharField(
+        max_length=3,
+        null=False,
+        blank=False,
+        choices=Version.choices,
+        default=Version.V_1,
     )
     # https://en.wikipedia.org/wiki/Longest_word_in_English
     # Sample word: Pneumonoultramicroscopicsilicovolcanoconiosis
@@ -54,6 +64,6 @@ class Dictionary(StandardModelMixin):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["language", "classification", "word_or_symbol"], name="unique_linguistic_set"
+                fields=["language", "classification", "version", "word_or_symbol"], name="unique_linguistic_set"
             )
         ]
