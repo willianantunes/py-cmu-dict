@@ -1,5 +1,6 @@
 import re
 
+from collections import deque
 from typing import List
 
 # https://en.m.wikipedia.org/wiki/ARPABET
@@ -72,25 +73,36 @@ class InternationalPhoneticAlphabet:
         "dh": "ð",
         "eh": "ɛ",
         "er": "ər",
+        "f": "f",
+        "g": "ɡ",
         "hh": "h",
         "ih": "ɪ",
         "jh": "ʤ",
+        "n": "n",
         "ng": "ŋ",
         "ow": "oʊ",
         "oy": "ɔɪ",
+        "r": "ɹ",
         "sh": "ʃ",
+        "t": "t",
         "th": "θ",
         "uh": "ʊ",
         "uw": "u",
+        "w": "w",
         "zh": "ʒ",
         "iy": "i",
+        "s": "s",
+        "m": "m",
         "y": "j",
     }
     arpanet_stress_mark_to_ipa = {
         "1": "ˈ",
         "2": "ˌ",
     }
-    regex_to_clean_arpanet_and_ipa_stress_mark = r"[\dˈˌ]"
+    regex_to_clean_arpanet_and_ipa_stress_mark = (
+        fr"[\d{arpanet_stress_mark_to_ipa['1']}{arpanet_stress_mark_to_ipa['2']}]"
+    )
+    regex_to_capture_ipa_stress_mark = fr"([\{arpanet_stress_mark_to_ipa['1']}\{arpanet_stress_mark_to_ipa['2']}])"
 
     @classmethod
     def arpanet_syllable_count(cls, phonemes: List[str]) -> int:
@@ -120,7 +132,7 @@ class InternationalPhoneticAlphabet:
     @classmethod
     def apply_ipa_stress_marks_to_arpanet_phoneme(cls, phonemes: List[str]) -> List[str]:
         clusters = ["sp", "st", "sk", "fr", "fl"]
-        # stop searching for where stress starts if these are encountered
+        # Stop searching for where stress starts if these are encountered
         stop_set = ["nasal", "fricative", "vowel"]
 
         number_of_syllables = cls.arpanet_syllable_count(phonemes)
@@ -128,14 +140,13 @@ class InternationalPhoneticAlphabet:
         if not eligible_to_apply_ipa_stress:
             return [cls._erase_stress_from_arpanet_phoneme(phoneme) for phoneme in phonemes]
         else:
-            updated_phonemes = []
+            updated_phonemes = deque()
             for phoneme in phonemes:
                 phoneme_last_char = phoneme[-1]
                 phoneme_eligible_to_be_evaluated = phoneme_last_char in cls.arpanet_stress_mark_to_ipa.keys()
                 if not phoneme_eligible_to_be_evaluated:
                     updated_phonemes.append(cls._erase_stress_from_arpanet_phoneme(phoneme))
                 else:
-                    # Extracting symbol
                     all_matches = re.findall(r"\d", phoneme)
                     if len(all_matches) > 1:
                         raise MoreThanOneARPANETStressMarkException
@@ -149,47 +160,75 @@ class InternationalPhoneticAlphabet:
                     else:
                         placed, hiatus = False, False
                         # Inverting to make the analysis easier
-                        updated_phonemes = updated_phonemes[::-1]
-                        # fmt: off
+                        updated_phonemes.reverse()
                         for index, updated_phoneme in enumerate(updated_phonemes):
-                            first_iteration = index == 0
-                            cleaned_updated_phoneme = re.sub(cls.regex_to_clean_arpanet_and_ipa_stress_mark, "", updated_phoneme)
+                            not_first_iteration = index > 0
+                            # Deal with updated_phoneme
+                            cleaned_updated_phoneme = cls._clean_all_stress_marks(updated_phoneme)
                             cleaned_updated_phoneme_type = cls.arpanet_phones[cleaned_updated_phoneme]
+                            # Deal with previous phoneme
+                            previous_updated_phoneme = updated_phonemes[index - 1]
+                            cleaned_previous_updated_phoneme = cls._clean_all_stress_marks(previous_updated_phoneme)
+                            cleaned_previous_updated_phoneme_type = cls.arpanet_phones[cleaned_previous_updated_phoneme]
+                            # Eligibility rules
+                            first_eligibility = cleaned_updated_phoneme_type in stop_set
+                            second_eligibility = not_first_iteration and cleaned_previous_updated_phoneme_type == "stop"
+                            third_eligibility = cleaned_updated_phoneme in ["er", "w"]
 
-                            if cleaned_updated_phoneme_type in stop_set:
-                                if cleaned_updated_phoneme_type == "vowel":
+                            if first_eligibility or second_eligibility or third_eligibility:
+                                conjunction = f"{cleaned_updated_phoneme}{cleaned_previous_updated_phoneme}"
+                                if conjunction in clusters:
+                                    updated_phonemes[index] = ipa_symbol + updated_phonemes[index]
+                                elif not cleaned_previous_updated_phoneme_type == "vowel" and not_first_iteration:
+                                    updated_phonemes[index - 1] = ipa_symbol + updated_phonemes[index - 1]
+                                elif cleaned_updated_phoneme_type == "vowel":
                                     hiatus = True
                                     cleaned_phoneme = cls._erase_stress_from_arpanet_phoneme(phoneme)
                                     new_phoneme = f"{ipa_symbol}{cleaned_phoneme}"
-                                    updated_phonemes.append(new_phoneme)
+                                    updated_phonemes.appendleft(new_phoneme)
                                 else:
                                     updated_phonemes[index] = ipa_symbol + updated_phonemes[index]
-                            else:
-                                previous_updated_phoneme = updated_phonemes[index - 1]
-                                cleaned_previous_updated_phoneme = re.sub(cls.regex_to_clean_arpanet_and_ipa_stress_mark, "", previous_updated_phoneme)
-                                cleaned_previous_updated_phoneme_type = cls.arpanet_phones[cleaned_previous_updated_phoneme]
-                                first_eligibility = not first_iteration and cleaned_previous_updated_phoneme_type == "stop"
-                                second_eligibility = cleaned_updated_phoneme in ["er", "w", "jh"]
-                                if first_eligibility or second_eligibility:
-                                    conjunction = f"{cleaned_updated_phoneme}{cleaned_previous_updated_phoneme}"
-                                    if conjunction in clusters:
-                                        updated_phonemes[index] = ipa_symbol + updated_phonemes[index]
-                                    elif not cleaned_previous_updated_phoneme_type == "vowel":
-                                        updated_phonemes[index - 1] = ipa_symbol + updated_phonemes[index - 1]
                                 placed = True
                                 break
-                        # fmt: on
                         if not placed:
                             index_to_place_refreshed_phoneme = len(updated_phonemes) - 1
                             refreshed_phoneme = ipa_symbol + updated_phonemes[index_to_place_refreshed_phoneme]
                             updated_phonemes[index_to_place_refreshed_phoneme] = refreshed_phoneme
                         # Normal order
-                        updated_phonemes = updated_phonemes[::-1]
+                        updated_phonemes.reverse()
                         if not hiatus:
                             cleaned_phoneme = cls._erase_stress_from_arpanet_phoneme(phoneme)
                             updated_phonemes.append(cleaned_phoneme)
-            return updated_phonemes
+            return list(updated_phonemes)
+
+    @classmethod
+    def ipa_format_from_arpanet(cls, phonemes: List[str]) -> List[str]:
+        swap_list = [("ˈər", "əˈr"), ("ˈie", "iˈe")]
+        phonemes_as_ipa_symbols = []
+        refreshed_phonemes = cls.apply_ipa_stress_marks_to_arpanet_phoneme(phonemes)
+
+        for index, phoneme in enumerate(refreshed_phonemes):
+            matches = list(re.finditer(cls.regex_to_capture_ipa_stress_mark, phoneme))
+            if not matches:
+                ipa_version = cls.arpanet_to_ipa[phoneme]
+                phonemes_as_ipa_symbols.append(ipa_version)
+            else:
+                match = matches[0]
+                mark_that_was_matched = match.group()
+                phoneme_without_stress = phoneme[match.end() :]
+                ipa_version = cls.arpanet_to_ipa[phoneme_without_stress]
+                final_ipa_version = f"{mark_that_was_matched}{ipa_version}"
+                phonemes_as_ipa_symbols.append(final_ipa_version)
+        for to_compare, to_swap in swap_list:
+            if not phonemes_as_ipa_symbols[0].startswith(to_compare):
+                phonemes_as_ipa_symbols[0] = phonemes_as_ipa_symbols[0].replace(to_compare, to_swap)
+
+        return phonemes_as_ipa_symbols
 
     @staticmethod
     def _erase_stress_from_arpanet_phoneme(phoneme):
         return re.sub(r"\d", "", phoneme)
+
+    @classmethod
+    def _clean_all_stress_marks(cls, phoneme):
+        return re.sub(cls.regex_to_clean_arpanet_and_ipa_stress_mark, "", phoneme)
