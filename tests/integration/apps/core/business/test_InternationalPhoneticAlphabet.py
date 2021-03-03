@@ -44,3 +44,41 @@ def test_should_count_syllables_for_arpanet_phonemes_scenario_6():
     number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_outside)
 
     assert number_of_syllables == 2
+
+
+def test_should_apply_stress_for_arpaned_phonemes_scenario_1():
+    callable = InternationalPhoneticAlphabet.apply_ipa_stress_marks_to_arpanet_phoneme
+
+    # assert callable(["ah0"]) == ["ah"]
+    # assert callable(["ey1"]) == ["ey"]
+    # assert callable(["iy1", "ah0"]) == ["ˈiy", "ah"]
+    # assert callable(["aa1", "k", "er0"]) == ["ˈaa", "k", "er"]
+    assert callable(["b", "iy1", "jh", "ey1"]) == ["ˈb", "iy", "ˈjh", "ey"]
+    assert callable(["s", "ah1", "m", "th", "ih0", "ng"]) == ["ˈs", "ah", "m", "th", "ih", "ng"]
+    assert callable(["th", "iy2", "er0", "eh1", "t", "ih0", "k", "ah0", "l", "iy0"]) == [
+        "ˌth",
+        "iy",
+        "er",
+        "ˈeh",
+        "t",
+        "ih",
+        "k",
+        "ah",
+        "l",
+        "iy",
+    ]
+    assert callable(["ey1", "f", "ao1", "r", "t", "uw1", "w", "ah1", "n", "t", "uw1", "ey1", "t"]) == [
+        "ˈey",
+        "ˈf",
+        "ao",
+        "r",
+        "ˈt",
+        "uw",
+        "ˈw",
+        "ah",
+        "n",
+        "ˈt",
+        "uw",
+        "ˈey",
+        "t",
+    ]

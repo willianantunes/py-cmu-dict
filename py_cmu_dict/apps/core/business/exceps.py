@@ -4,3 +4,7 @@ class MoreVariantsThanWhatIsSupportedException(Exception):
 
 class DatabaseFileNotAvailable(Exception):
     pass
+
+
+class MoreThanOneARPANETStressMarkException(Exception):
+    pass
