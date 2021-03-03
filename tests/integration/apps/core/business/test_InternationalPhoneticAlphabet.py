@@ -27,3 +27,20 @@ def test_should_count_syllables_for_arpanet_phonemes_scenario_4():
     number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_caramel)
 
     assert number_of_syllables == 3
+
+
+def test_should_count_syllables_for_arpanet_phonemes_scenario_5():
+    # The word "came" has 2 vowels, but the "e" is silent, leaving one vowel sound and 1 syllable
+    phonemes_for_word_came = ["k", "ey1", "m"]
+    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_came)
+
+    assert number_of_syllables == 1
+
+
+def test_should_count_syllables_for_arpanet_phonemes_scenario_6():
+    # The word "outside" has 4 vowels, but the "e" is silent and the "ou" is a diphthong which counts as only one sound,
+    # so this word has only two vowels sounds and therefore, 2 syllables.
+    phonemes_for_word_outside = ["aw1", "t", "s", "ay1", "d"]
+    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_outside)
+
+    assert number_of_syllables == 2

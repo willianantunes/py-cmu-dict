@@ -5,6 +5,7 @@ from typing import List
 
 # https://en.m.wikipedia.org/wiki/ARPABET
 # https://en.wikipedia.org/wiki/International_Phonetic_Alphabet
+# http://english.glendale.cc.ca.us/phonics.rules.html
 class InternationalPhoneticAlphabet:
     arpanet_phones = {
         "aa": "vowel",
@@ -84,14 +85,20 @@ class InternationalPhoneticAlphabet:
         nuclei_count = 0
 
         for index, current_phoneme in enumerate(cleaned_phonemes):
-            previous_phoneme = cleaned_phonemes[index - 1]
-            phone_type_previous_phoneme = cls.arpanet_phones[previous_phoneme]
-
             if cls.arpanet_phones[current_phoneme] == "vowel":
-                if index > 0 and not phone_type_previous_phoneme == "vowel" or index == 0:
+                first_iteration = index == 0
+
+                if first_iteration:
                     nuclei_count += 1
-                elif [previous_phoneme, current_phoneme] in cls.arpanet_hiatus:
-                    nuclei_count += 1
+                else:
+                    previous_phoneme = cleaned_phonemes[index - 1]
+                    previous_phoneme_type = cls.arpanet_phones[previous_phoneme]
+                    previous_phoneme_type_is_not_vowel = not previous_phoneme_type == "vowel"
+
+                    if previous_phoneme_type_is_not_vowel:
+                        nuclei_count += 1
+                    elif [previous_phoneme, current_phoneme] in cls.arpanet_hiatus:
+                        nuclei_count += 1
 
         return nuclei_count
 
