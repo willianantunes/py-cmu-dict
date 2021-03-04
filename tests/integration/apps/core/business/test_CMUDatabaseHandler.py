@@ -19,7 +19,7 @@ def test_should_extract_line_scenario_1():
     cmu_line = CMUDatabaseHandler.extract_data(sample_line_1)
 
     assert cmu_line.word_or_symbol == "live"
-    assert cmu_line.phoneme == "l ay1 v"
+    assert cmu_line.phonemes == "l ay1 v".split(" ")
     assert cmu_line.variant == Variant.V1
 
 
@@ -28,7 +28,7 @@ def test_should_extract_line_scenario_2():
     cmu_line = CMUDatabaseHandler.extract_data(sample_line_1)
 
     assert cmu_line.word_or_symbol == "live"
-    assert cmu_line.phoneme == "l ih1 v"
+    assert cmu_line.phonemes == "l ih1 v".split(" ")
     assert cmu_line.variant == Variant.V2
 
 
@@ -37,7 +37,7 @@ def test_should_extract_line_scenario_3():
     cmu_line = CMUDatabaseHandler.extract_data(sample_line_1)
 
     assert cmu_line.word_or_symbol == "lubricants"
-    assert cmu_line.phoneme == "l uw1 b r ah0 k ah0 n s"
+    assert cmu_line.phonemes == "l uw1 b r ah0 k ah0 n s".split(" ")
     assert cmu_line.variant == Variant.V3
 
 
@@ -46,7 +46,7 @@ def test_should_extract_line_scenario_4():
     cmu_line = CMUDatabaseHandler.extract_data(sample_line_1)
 
     assert cmu_line.word_or_symbol == "memphis"
-    assert cmu_line.phoneme == "m eh1 m p f ih0 s"
+    assert cmu_line.phonemes == "m eh1 m p f ih0 s".split(" ")
     assert cmu_line.variant == Variant.V4
 
 
@@ -55,19 +55,19 @@ def test_should_extract_line_scenario_5():
     cmu_line = CMUDatabaseHandler.extract_data(sample_line_1)
 
     assert cmu_line.word_or_symbol == "her's"
-    assert cmu_line.phoneme == "hh er1 z"
+    assert cmu_line.phonemes == "hh er1 z".split(" ")
     assert cmu_line.variant == Variant.V1
 
 
 def test_should_extract_line_scenario_6():
     cmu_line_1 = CMUDatabaseHandler.extract_data("A.'S  EY1 Z")
     assert cmu_line_1.word_or_symbol == "a.'s"
-    assert cmu_line_1.phoneme == "ey1 z"
+    assert cmu_line_1.phonemes == "ey1 z".split(" ")
     assert cmu_line_1.variant == Variant.V1
 
     cmu_line_2 = CMUDatabaseHandler.extract_data("A.D.  EY2 D IY1")
     assert cmu_line_2.word_or_symbol == "a.d."
-    assert cmu_line_2.phoneme == "ey2 d iy1"
+    assert cmu_line_2.phonemes == "ey2 d iy1".split(" ")
     assert cmu_line_2.variant == Variant.V1
 
 
@@ -81,7 +81,7 @@ def test_should_return_10_lines_as_the_others_are_invalid():
     sample_file = resource_location("sample-part-2-cmudict-0.7b.txt")
 
     carnegie_mellon_university_database = CMUDatabaseHandler(sample_file)
-    lines = list(carnegie_mellon_university_database.retrieve_lines())
+    lines = list(carnegie_mellon_university_database.retrieve_cmu_lines())
 
     assert len(lines) == 10
 
@@ -90,7 +90,7 @@ def test_should_retrieve_configured_lines():
     sample_file = resource_location("sample-part-3-cmudict-0.7b.txt")
 
     carnegie_mellon_university_database = CMUDatabaseHandler(sample_file)
-    lines = list(carnegie_mellon_university_database.retrieve_lines())
+    lines = list(carnegie_mellon_university_database.retrieve_cmu_lines())
 
     assert len(lines) == 2
 
@@ -98,9 +98,35 @@ def test_should_retrieve_configured_lines():
     cmu_line_2 = lines[1]
 
     assert cmu_line_1.word_or_symbol == "a"
-    assert cmu_line_1.phoneme == "ah0"
+    assert cmu_line_1.phonemes == "ah0".split(" ")
     assert cmu_line_1.variant == Variant.V1
 
     assert cmu_line_2.word_or_symbol == "a"
-    assert cmu_line_2.phoneme == "ey1"
+    assert cmu_line_2.phonemes == "ey1".split(" ")
     assert cmu_line_2.variant == Variant.V2
+
+
+def test_should_count_valid_lines():
+    cmu_database = resource_location("cmudict-0.7b.txt")
+
+    carnegie_mellon_university_database = CMUDatabaseHandler(cmu_database)
+
+    number_of_current_lines = 134429
+    invalid_header_lines = 126
+    invalid_footer_lines = 5
+    correct_count_of_valid_lines = number_of_current_lines - invalid_header_lines - invalid_footer_lines
+
+    assert carnegie_mellon_university_database.number_of_valid_entries == correct_count_of_valid_lines
+
+
+def test_should_handle_lines_with_two_and_three_white_spaces():
+    cmu_database = resource_location("sample-part-4-cmudict-0.7b.txt")
+
+    carnegie_mellon_university_database = CMUDatabaseHandler(cmu_database)
+    lines = list(carnegie_mellon_university_database.retrieve_cmu_lines())
+
+    assert len(lines) == 3
+    for mcu_line in lines:
+        assert len(mcu_line.phonemes) > 0
+        for phoneme in mcu_line.phonemes:
+            assert phoneme

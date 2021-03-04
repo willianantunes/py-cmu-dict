@@ -15,7 +15,11 @@ class StandardModelMixin(models.Model):
 class Language(StandardModelMixin):
     # https://github.com/espeak-ng/espeak-ng/blob/master/docs/languages.md
     # One example that might be applicable: en-gb-scotland
-    name = models.CharField(max_length=20, null=True, blank=True)
+    language_tag = models.CharField(max_length=20, null=True, blank=True, unique=True)
+    # Language Family: West Germanic
+    # Language: English
+    # Accent/Dialect: Scottish
+    name = models.CharField(max_length=50, null=False, blank=False)
 
 
 class Dictionary(StandardModelMixin):
@@ -54,7 +58,7 @@ class Dictionary(StandardModelMixin):
     )
     # https://en.wikipedia.org/wiki/Longest_word_in_English
     # Sample word: Pneumonoultramicroscopicsilicovolcanoconiosis
-    word_or_symbol = models.CharField(max_length=45, unique=True, null=False, blank=False)
+    word_or_symbol = models.CharField(max_length=45, null=False, blank=False)
     # See more in docs/NLPA-Phon1.pdf
     phoneme = models.CharField(max_length=100, null=True, blank=True)
     # Phonemic is the hypothetical sounds and phonetics is the actual production of them
