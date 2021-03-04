@@ -1,5 +1,3 @@
-import uuid
-
 from django.db import models
 
 
@@ -32,9 +30,9 @@ class Dictionary(StandardModelMixin):
     class WordClassification(models.TextChoices):
         NOUN = "NOUN", "Noun"
         PRONOUN = "PRONOUN", "Pronoun"
-        ADJECTIVE = "ADJECTIVE", "Adjectives"
+        ADJECTIVE = "ADJECTIVE", "Adjective"
         VERB = "VERB", "Verb"
-        ADVERB = "ADVERB", "Adverbs"
+        ADVERB = "ADVERB", "Adverb"
         PREPOSITION = "PREPOSITION", "Preposition"
         CONJUNCTION = "CONJUNCTION", "Conjunction"
         INTERJECTION = "INTERJECTION", "Interjection"
