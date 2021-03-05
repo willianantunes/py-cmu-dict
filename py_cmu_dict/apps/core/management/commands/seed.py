@@ -20,12 +20,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("--cmu-file-location", type=str, help="Full path where CMU database file is")
+        parser.add_argument("--use-language-tag", type=str, default="en-us")
         parser.add_argument("--create-super-user", action="store_true")
         parser.add_argument("-u", type=str, default="admin")
         parser.add_argument("-p", type=str, default="admin")
 
     def handle(self, *args, **options):
         self.cmu_file_location = options["cmu_file_location"]
+        self.use_language_tag = options["use_language_tag"]
         self.create_super_user = options["create_super_user"]
         self.admin_username = options["u"].strip()
         self.admin_password = options["p"].strip()
@@ -46,7 +48,7 @@ class Command(BaseCommand):
                 self.stdout.write("No need to fill the table!")
             else:
                 batch_size = getattr(settings, "DJANGO_BULK_BATCH_SIZE")
-                language_model, created = Language.objects.get_or_create(language_tag="en-us")
+                language_model, created = Language.objects.get_or_create(language_tag=self.use_language_tag)
                 self.stdout.write(f"Was {language_model.language_tag} created? {created}")
 
                 self.stdout.write("Initializing database handler and generators...")
@@ -84,10 +86,10 @@ def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], lan
 
         # Better to join without spaces
         ipa_phonemic = ipa_phonemic_separator_mark.join(result.ipa_format)
-        ipa_phonemic_syllables = _create_syllable_entry(result.ipa_syllable, syllable_separator_mark)
+        ipa_phonemic_syllables = Dictionary.create_syllable_entry_ipa(result.ipa_syllable)
         # Better to leave with spaces
         arpanet_phoneme = arpanet_phoneme_separator_mark.join(result.arpanet_format)
-        arpanet_phoneme_syllables = _create_syllable_entry(result.arpanet_syllable, syllable_separator_mark)
+        arpanet_phoneme_syllables = Dictionary.create_syllable_entry_arpabet(result.arpanet_syllable)
 
         yield Dictionary(
             word_or_symbol=cmu_line.word_or_symbol,
@@ -98,15 +100,6 @@ def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], lan
             version=version,
             language=language,
         )
-
-
-def _create_syllable_entry(syllables: List[List[str]], separator: str) -> str:
-    joined_syllables = []
-
-    for syllable in syllables:
-        joined_syllables.append("".join(syllable))
-
-    return f" {separator} ".join(joined_syllables)
 
 
 def _create_super_user(username, password):

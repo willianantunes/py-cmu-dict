@@ -1,3 +1,5 @@
+from typing import List
+
 from django.db import models
 
 
@@ -26,7 +28,7 @@ class Language(StandardModelMixin):
 
 
 class Dictionary(StandardModelMixin):
-    syllable_separator_mark = "•"
+    syllable_separator_mark = " • "
     arpanet_phoneme_separator_mark = " "
     ipa_phonemic_separator_mark = " "
 
@@ -86,3 +88,30 @@ class Dictionary(StandardModelMixin):
 
     def __str__(self):
         return self.word_or_symbol
+
+    @classmethod
+    def create_syllable_entry_ipa(cls, syllables: List[List[str]]) -> str:
+        return cls._create_syllable_entry(syllables, cls.ipa_phonemic_separator_mark)
+
+    def transform_ipa_syllable_entry_to_object(self) -> List[List[str]]:
+        syllables = self.ipa_phonemic_syllables.split(self.syllable_separator_mark)
+        updated_syllables = []
+
+        for entry in syllables:
+            updated_entry = entry.split(self.ipa_phonemic_separator_mark)
+            updated_syllables.append(updated_entry)
+
+        return updated_syllables
+
+    @classmethod
+    def create_syllable_entry_arpabet(cls, syllables: List[List[str]]) -> str:
+        return cls._create_syllable_entry(syllables, cls.arpanet_phoneme_separator_mark)
+
+    @classmethod
+    def _create_syllable_entry(cls, syllables: List[List[str]], separator: str) -> str:
+        joined_syllables = []
+
+        for syllable in syllables:
+            joined_syllables.append(separator.join(syllable))
+
+        return cls.syllable_separator_mark.join(joined_syllables)

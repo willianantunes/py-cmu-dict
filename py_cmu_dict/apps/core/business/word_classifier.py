@@ -34,21 +34,34 @@ def discover_rhymes(word_or_symbol: str, language_tag: str) -> Optional[List[str
             if language_tag == "en-us":
                 return _discover_rhymes_for_cmu(word_from_database, base_query_set)
 
-            separator_mark = Dictionary.syllable_separator_mark
-            syllables = word_from_database.ipa_phonemic_syllables.split(separator_mark)
-            number_of_syllables = len(syllables)
-            logger.debug(f"The word '{word_or_symbol}' has {number_of_syllables} syllables")
-            query_set_syllables = base_query_set.exclude(pk=word_from_database.pk)
+            return _discover_rhymes_standard_way(word_from_database, base_query_set)
 
-            if number_of_syllables == 1:
-                syllable_available = syllables[0]
-                return list(query_set_syllables.filter(ipa_phonetic__endswith=syllable_available))
-            else:
-                raise NotImplementedError
+
+def _discover_rhymes_standard_way(word_or_symbol: Dictionary, base_query_set: QuerySet) -> Optional[List[str]]:
+    logger.debug("Discovering rhymes through STANDARD strategy by syllable...")
+    syllables = word_or_symbol.transform_ipa_syllable_entry_to_object()
+    number_of_syllables = len(syllables)
+    logger.debug(f"The word '{word_or_symbol}' has {number_of_syllables} syllables")
+    query_set_syllables = base_query_set.exclude(pk=word_or_symbol.pk)
+
+    # Naive implementation!
+    # For certain there is something more technical in terms of linguistics...
+    if number_of_syllables == 1:
+        syllables_to_be_used = syllables[0]
+    else:
+        # Maybe only get the last syllable? Long words might bring problem...
+        syllables_to_be_used = syllables[1::]
+
+    syllables_to_consult_in_database = Dictionary.create_syllable_entry_ipa(syllables_to_be_used)
+    result = query_set_syllables.filter(ipa_phonemic__endswith=syllables_to_consult_in_database)
+    cleaned_result = [tuple_entry[0] for tuple_entry in result.values_list("word_or_symbol")]
+    logger.debug(f"Total rhymes words found: {len(cleaned_result)}")
+
+    return cleaned_result
 
 
 def _discover_rhymes_for_cmu(word_or_symbol: Dictionary, base_query_set: QuerySet) -> Optional[List[str]]:
-    logger.debug("Using CMU ARPABET strategy")
+    logger.debug("Discovering rhymes through ARPABET strategy")
     # Some important variables
     arpabet_stress_mark = "1"
     separator_mark = Dictionary.arpanet_phoneme_separator_mark
@@ -60,7 +73,7 @@ def _discover_rhymes_for_cmu(word_or_symbol: Dictionary, base_query_set: QuerySe
             phoneme_to_be_used = separator_mark.join(phonemes[index:])
     # Then we should fallback to the common strategy
     if not phoneme_to_be_used:
-        raise NotImplementedError
+        return _discover_rhymes_standard_way(word_or_symbol, base_query_set)
     # Otherwise, we can try!
     result = base_query_set.filter(arpanet_phoneme__endswith=phoneme_to_be_used)
     cleaned_result = [tuple_entry[0] for tuple_entry in result.values_list("word_or_symbol")]
