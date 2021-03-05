@@ -12,8 +12,8 @@ def test_should_create_languages():
 
     persisted_lang_1, persisted_lang_2 = create_language(lang_1), create_language(lang_2)
 
-    assert persisted_lang_1.name == lang_1
-    assert persisted_lang_2.name == lang_2
+    assert persisted_lang_1.language_tag == lang_1
+    assert persisted_lang_2.language_tag == lang_2
     assert Language.objects.count() == 2
 
 
@@ -26,7 +26,7 @@ def test_should_create_dictionaries():
     d_1 = create_dictionary(word_1, language, ipa_phonemic=phonemic_1)
     assert d_1.word_or_symbol == word_1
     assert d_1.ipa_phonemic == phonemic_1
-    assert d_1.language.name == language.name
+    assert d_1.language.language_tag == language.language_tag
     create_dictionary(word_2, language, ipa_phonemic=phonemic_1)
     create_dictionary(word_3, language, ipa_phonemic=phonemic_1)
     create_dictionary(word_4, language, ipa_phonemic=phonemic_2)

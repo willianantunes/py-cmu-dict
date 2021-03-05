@@ -7,27 +7,35 @@ from py_cmu_dict.apps.core.business.word_classifier import discover_rhymes
 from tests.resources.resource_loader import resource_location
 
 
-@pytest.fixture(autouse=True)
-def create_database(mocker):
-    mocker.patch("py_cmu_dict.settings.DJANGO_BULK_BATCH_SIZE", 20_000)
-    cmu_file_location = resource_location("cmudict-0.7b.txt")
+@pytest.fixture
+def create_database_rhymes_1():
+    cmu_file_location = resource_location("sample-part-rhymes-1-cmudict-0.7b.txt")
     call_command("seed", "--cmu-file-location", cmu_file_location)
 
 
 @pytest.mark.django_db
-def test_should_return_rhymes_from_word_function():
-    word_to_be_analysed = "function"
+def test_should_return_rhymes_from_word_sold_with_cmu(create_database_rhymes_1):
+    word_to_be_analysed, language_tag = "sold", "en-us"
 
-    rhymes = discover_rhymes(word_to_be_analysed)
+    rhymes = discover_rhymes(word_to_be_analysed, language_tag)
+
+    assert rhymes == ["sold", "strolled", "told", "uncontrolled"]
+
+
+@pytest.mark.django_db
+def test_should_return_rhymes_from_word_function_without_cmu():
+    word_to_be_analysed, language_tag = "function", "en-us"
+
+    rhymes = discover_rhymes(word_to_be_analysed, language_tag)
 
     assert rhymes == ["compunction", "conjunction", "dysfunction", "injunction", "junction", "malfunction"]
 
 
 @pytest.mark.django_db
-def test_should_return_rhymes_from_word_rhyming():
-    word_to_be_analysed = "rhyming"
+def test_should_return_rhymes_from_word_rhyming_without_cmu():
+    word_to_be_analysed, language_tag = "rhyming", "en-us"
 
-    rhymes = discover_rhymes(word_to_be_analysed)
+    rhymes = discover_rhymes(word_to_be_analysed, language_tag)
 
     assert rhymes == ["climbing", "diming", "liming", "priming", "timing"]
 

@@ -22,5 +22,5 @@ def create_dictionary(
     )
 
 
-def create_language(name):
-    return Language.objects.create(name=name)
+def create_language(language_tag):
+    return Language.objects.create(language_tag=language_tag)

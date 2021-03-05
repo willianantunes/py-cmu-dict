@@ -26,6 +26,10 @@ class Language(StandardModelMixin):
 
 
 class Dictionary(StandardModelMixin):
+    syllable_separator_mark = "•"
+    arpanet_phoneme_separator_mark = " "
+    ipa_phonemic_separator_mark = " "
+
     class Version(models.TextChoices):
         V_1 = "V_1", "Version 1"
         V_2 = "V_2", "Version 2"

@@ -78,12 +78,16 @@ def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], lan
         else:
             version = Dictionary.Version.V_4
 
+        syllable_separator_mark = Dictionary.syllable_separator_mark
+        arpanet_phoneme_separator_mark = Dictionary.arpanet_phoneme_separator_mark
+        ipa_phonemic_separator_mark = Dictionary.ipa_phonemic_separator_mark
+
         # Better to join without spaces
-        ipa_phonemic = "".join(result.ipa_format)
-        ipa_phonemic_syllables = _create_syllable_entry(result.ipa_syllable)
+        ipa_phonemic = ipa_phonemic_separator_mark.join(result.ipa_format)
+        ipa_phonemic_syllables = _create_syllable_entry(result.ipa_syllable, syllable_separator_mark)
         # Better to leave with spaces
-        arpanet_phoneme = " ".join(result.arpanet_format)
-        arpanet_phoneme_syllables = _create_syllable_entry(result.arpanet_syllable)
+        arpanet_phoneme = arpanet_phoneme_separator_mark.join(result.arpanet_format)
+        arpanet_phoneme_syllables = _create_syllable_entry(result.arpanet_syllable, syllable_separator_mark)
 
         yield Dictionary(
             word_or_symbol=cmu_line.word_or_symbol,
@@ -96,13 +100,13 @@ def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], lan
         )
 
 
-def _create_syllable_entry(syllables: List[List[str]]) -> str:
+def _create_syllable_entry(syllables: List[List[str]], separator: str) -> str:
     joined_syllables = []
 
     for syllable in syllables:
         joined_syllables.append("".join(syllable))
 
-    return " • ".join(joined_syllables)
+    return f" {separator} ".join(joined_syllables)
 
 
 def _create_super_user(username, password):
