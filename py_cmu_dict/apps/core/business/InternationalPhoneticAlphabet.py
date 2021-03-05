@@ -269,22 +269,15 @@ class InternationalPhoneticAlphabet:
 
         # Now let's get the syllable details using IPA format
         syllable_details = cls.arpanet_syllable_count(phonemes)
-        if syllable_details.count == 1:
-            # Sanity check
-            assert len(phonemes_as_ipa_symbols) == 1
-            # Simplest case
-            ipa_syllables = [phonemes_as_ipa_symbols]
-        else:
-            # Hardest case
-            ipa_syllables = []
-            where_to_start = 0
-            for syllable_part in syllable_details.syllables:
-                ipa_syllable = []
-                for index, arpanet_symbol in enumerate(syllable_part):
-                    ipa_syllable.append(phonemes_as_ipa_symbols[where_to_start + index])
-                    if index == len(syllable_part) - 1:
-                        where_to_start = where_to_start + index + 1
-                        ipa_syllables.append(ipa_syllable)
+        ipa_syllables = []
+        where_to_start = 0
+        for syllable_part in syllable_details.syllables:
+            ipa_syllable = []
+            for index, arpanet_symbol in enumerate(syllable_part):
+                ipa_syllable.append(phonemes_as_ipa_symbols[where_to_start + index])
+                if index == len(syllable_part) - 1:
+                    where_to_start = where_to_start + index + 1
+                    ipa_syllables.append(ipa_syllable)
 
         return IPAConversionDetails(phonemes, syllable_details.syllables, phonemes_as_ipa_symbols, ipa_syllables)
 

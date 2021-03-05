@@ -1,6 +1,5 @@
-import logging
-
 from typing import Generator
+from typing import List
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -13,8 +12,6 @@ from py_cmu_dict.apps.core.business.InternationalPhoneticAlphabet import Interna
 from py_cmu_dict.apps.core.models import Dictionary
 from py_cmu_dict.apps.core.models import Language
 from py_cmu_dict.support.iter_utils import chunker
-
-logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
@@ -48,14 +45,14 @@ class Command(BaseCommand):
                     Dictionary.objects.bulk_create(dtos, batch_size)
                 saved_data += batch_size
                 if saved_data % 20_000 == 0:
-                    logger.info(f"Entries saved: {Dictionary.objects.count()}")
+                    self.stdout.write(f"Entries saved: {Dictionary.objects.count()}")
 
-            logger.info(f"Total entries created: {Dictionary.objects.count()}")
+            self.stdout.write(f"Total entries created: {Dictionary.objects.count()}")
 
 
 def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], language: Language):
     for cmu_line in cmu_line_generator:
-        phonemes_as_ipa_symbols = InternationalPhoneticAlphabet.ipa_format_from_arpanet(cmu_line.phonemes)
+        result = InternationalPhoneticAlphabet.ipa_format_from_arpanet(cmu_line.phonemes)
 
         if cmu_line.variant == Variant.V1:
             version = Dictionary.Version.V_1
@@ -67,14 +64,27 @@ def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], lan
             version = Dictionary.Version.V_4
 
         # Better to join without spaces
-        phonemic = "".join(phonemes_as_ipa_symbols)
+        ipa_phonemic = "".join(result.ipa_format)
+        ipa_phonemic_syllables = _create_syllable_entry(result.ipa_syllable)
         # Better to leave with spaces
-        phoneme = " ".join(cmu_line.phonemes)
+        arpanet_phoneme = " ".join(result.arpanet_format)
+        arpanet_phoneme_syllables = _create_syllable_entry(result.arpanet_syllable)
 
         yield Dictionary(
             word_or_symbol=cmu_line.word_or_symbol,
-            phoneme=phoneme,
-            phonemic=phonemic,
+            arpanet_phoneme=arpanet_phoneme,
+            arpanet_phoneme_syllables=arpanet_phoneme_syllables,
+            ipa_phonemic=ipa_phonemic,
+            ipa_phonemic_syllables=ipa_phonemic_syllables,
             version=version,
             language=language,
         )
+
+
+def _create_syllable_entry(syllables: List[List[str]]) -> str:
+    joined_syllables = []
+
+    for syllable in syllables:
+        joined_syllables.append("".join(syllable))
+
+    return " • ".join(joined_syllables)

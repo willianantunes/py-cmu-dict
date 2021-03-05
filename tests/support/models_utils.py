@@ -5,9 +5,9 @@ from py_cmu_dict.apps.core.models import Language
 def create_dictionary(
     word_or_symbol,
     language,
-    phoneme=None,
-    phonemic=None,
-    phonetic=None,
+    arpanet_phoneme=None,
+    ipa_phonemic=None,
+    ipa_phonetic=None,
     classification=Dictionary.WordClassification.UNDEFINED,
     version=Dictionary.Version.V_1,
 ):
@@ -15,9 +15,9 @@ def create_dictionary(
         word_or_symbol=word_or_symbol,
         classification=classification,
         version=version,
-        phoneme=phoneme,
-        phonemic=phonemic,
-        phonetic=phonetic,
+        arpanet_phoneme=arpanet_phoneme,
+        ipa_phonemic=ipa_phonemic,
+        ipa_phonetic=ipa_phonetic,
         language=language,
     )
 
