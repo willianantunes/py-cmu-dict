@@ -3,47 +3,53 @@ from py_cmu_dict.apps.core.business.InternationalPhoneticAlphabet import Interna
 
 def test_should_count_syllables_for_arpanet_phonemes_scenario_1():
     phonemes_for_word_something = ["s", "ah1", "m", "th", "ih0", "ng"]
-    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_something)
+    syllable_details = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_something)
 
-    assert number_of_syllables == 2
+    assert syllable_details.count == 2
+    assert syllable_details.syllables == [["s", "ah1", "m"], ["th", "ih0", "ng"]]
 
 
 def test_should_count_syllables_for_arpanet_phonemes_scenario_2():
     phonemes_for_word_solicitation = ["s", "ah0", "l", "ih2", "s", "ih0", "t", "ey1", "sh", "ah0", "n"]
-    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_solicitation)
+    syllable_details = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_solicitation)
 
-    assert number_of_syllables == 5
+    assert syllable_details.count == 5
+    assert syllable_details.syllables == [["s", "ah0"], ["l", "ih2"], ["s", "ih0"], ["t", "ey1"], ["sh", "ah0", "n"]]
 
 
 def test_should_count_syllables_for_arpanet_phonemes_scenario_3():
     phonemes_for_word_sold = ["s", "ow1", "l", "d"]
-    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_sold)
+    syllable_details = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_sold)
 
-    assert number_of_syllables == 1
+    assert syllable_details.count == 1
+    assert syllable_details.syllables == [["s", "ow1", "l", "d"]]
 
 
 def test_should_count_syllables_for_arpanet_phonemes_scenario_4():
     phonemes_for_word_caramel = ["k", "eh1", "r", "ah0", "m", "ah0", "l"]
-    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_caramel)
+    syllable_details = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_caramel)
 
-    assert number_of_syllables == 3
+    assert syllable_details.count == 3
+    assert syllable_details.syllables == [["k", "eh1"], ["r", "ah0"], ["m", "ah0", "l"]]
 
 
 def test_should_count_syllables_for_arpanet_phonemes_scenario_5():
     # The word "came" has 2 vowels, but the "e" is silent, leaving one vowel sound and 1 syllable
     phonemes_for_word_came = ["k", "ey1", "m"]
-    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_came)
+    syllable_details = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_came)
 
-    assert number_of_syllables == 1
+    assert syllable_details.count == 1
+    assert syllable_details.syllables == [["k", "ey1", "m"]]
 
 
 def test_should_count_syllables_for_arpanet_phonemes_scenario_6():
     # The word "outside" has 4 vowels, but the "e" is silent and the "ou" is a diphthong which counts as only one sound,
     # so this word has only two vowels sounds and therefore, 2 syllables.
     phonemes_for_word_outside = ["aw1", "t", "s", "ay1", "d"]
-    number_of_syllables = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_outside)
+    syllable_details = InternationalPhoneticAlphabet.arpanet_syllable_count(phonemes_for_word_outside)
 
-    assert number_of_syllables == 2
+    assert syllable_details.count == 2
+    assert syllable_details.syllables == [["aw1", "t"], ["s", "ay1", "d"]]
 
 
 def test_should_apply_stress_for_arpaned_phonemes_scenario_1():
@@ -85,11 +91,28 @@ def test_should_apply_stress_for_arpaned_phonemes_scenario_1():
 
 
 def test_should_transform_arpanet_to_ipa_scenario_1():
-    arpanet_1 = ["ey1", "f", "ao1", "r", "t", "uw1", "w", "ah1", "n", "t", "uw1", "ey1", "t"]
-    ipa_1 = ["ˈeɪ", "ˈf", "ɔ", "ɹ", "ˈt", "u", "ˈw", "ə", "n", "ˈt", "u", "ˈeɪ", "t"]
+    arpanet_1_word_a42128 = ["ey1", "f", "ao1", "r", "t", "uw1", "w", "ah1", "n", "t", "uw1", "ey1", "t"]
 
-    assert InternationalPhoneticAlphabet.ipa_format_from_arpanet(arpanet_1) == ipa_1
+    result = InternationalPhoneticAlphabet.ipa_format_from_arpanet(arpanet_1_word_a42128)
 
-    arpanet_2 = ["s", "ah1", "m", "th", "ih0", "ng"]
-    ipa_2 = ["ˈs", "ə", "m", "θ", "ɪ", "ŋ"]
-    assert InternationalPhoneticAlphabet.ipa_format_from_arpanet(arpanet_2) == ipa_2
+    assert result.arpanet_format == arpanet_1_word_a42128
+    assert result.arpanet_syllable == [
+        ["ey1"],
+        ["f", "ao1", "r"],
+        ["t", "uw1"],
+        ["w", "ah1", "n"],
+        ["t", "uw1", "ey1", "t"],
+    ]
+    assert result.ipa_format == ["ˈeɪ", "ˈf", "ɔ", "ɹ", "ˈt", "u", "ˈw", "ə", "n", "ˈt", "u", "ˈeɪ", "t"]
+    assert result.ipa_syllable == [["ˈeɪ"], ["ˈf", "ɔ", "ɹ"], ["ˈt", "u"], ["ˈw", "ə", "n"], ["ˈt", "u", "ˈeɪ", "t"]]
+
+
+def test_should_transform_arpanet_to_ipa_scenario_2():
+    arpanet_word_something = ["s", "ah1", "m", "th", "ih0", "ng"]
+
+    result = InternationalPhoneticAlphabet.ipa_format_from_arpanet(arpanet_word_something)
+
+    assert result.arpanet_format == arpanet_word_something
+    assert result.arpanet_syllable == [["s", "ah1", "m"], ["th", "ih0", "ng"]]
+    assert result.ipa_format == ["ˈs", "ə", "m", "θ", "ɪ", "ŋ"]
+    assert result.ipa_syllable == [["ˈs", "ə", "m"], ["θ", "ɪ", "ŋ"]]

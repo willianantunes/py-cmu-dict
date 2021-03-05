@@ -1,14 +1,29 @@
 import re
 
 from collections import deque
+from dataclasses import dataclass
 from typing import List
+
+from py_cmu_dict.apps.core.business.exceps import MoreThanOneARPANETStressMarkException
+
+
+@dataclass(frozen=True)
+class ARPANETSyllableDetails:
+    syllables: List[List[str]]
+    count: int
+
+
+@dataclass(frozen=True)
+class IPAConversionDetails:
+    arpanet_format: List[str]
+    arpanet_syllable: List[List[str]]
+    ipa_format: List[str]
+    ipa_syllable: List[List[str]]
+
 
 # https://en.m.wikipedia.org/wiki/ARPABET
 # https://en.wikipedia.org/wiki/International_Phonetic_Alphabet
 # http://english.glendale.cc.ca.us/phonics.rules.html
-from py_cmu_dict.apps.core.business.exceps import MoreThanOneARPANETStressMarkException
-
-
 class InternationalPhoneticAlphabet:
     arpanet_phones = {
         "aa": "vowel",
@@ -112,17 +127,20 @@ class InternationalPhoneticAlphabet:
     regex_to_capture_ipa_stress_mark = fr"([\{arpanet_stress_mark_to_ipa['1']}\{arpanet_stress_mark_to_ipa['2']}])"
 
     @classmethod
-    def arpanet_syllable_count(cls, phonemes: List[str]) -> int:
+    def arpanet_syllable_count(cls, phonemes: List[str]) -> ARPANETSyllableDetails:
         # Stress should be wipe out!
         cleaned_phonemes = [cls._erase_stress_from_arpanet_phoneme(phoneme) for phoneme in phonemes]
         # This will indicate how many syllable all the phonemes has
         nuclei_count = 0
+        # How to split it
+        splitter = []
 
         for index, current_phoneme in enumerate(cleaned_phonemes):
             if cls.arpanet_phones[current_phoneme] == "vowel":
                 first_iteration = index == 0
 
                 if first_iteration:
+                    splitter.append(index)
                     nuclei_count += 1
                 else:
                     previous_phoneme = cleaned_phonemes[index - 1]
@@ -130,11 +148,30 @@ class InternationalPhoneticAlphabet:
                     previous_phoneme_type_is_not_vowel = not previous_phoneme_type == "vowel"
 
                     if previous_phoneme_type_is_not_vowel:
+                        splitter.append(index - 1)
                         nuclei_count += 1
                     elif [previous_phoneme, current_phoneme] in cls.arpanet_hiatus:
+                        splitter.append(index)
                         nuclei_count += 1
 
-        return nuclei_count
+        if len(splitter) > 1:
+            # Naive implementation!
+            # The first value is not needed
+            which_parts_should_be_split = splitter[1::]
+            first_syllable_slice = which_parts_should_be_split[0]
+            first_part = phonemes[0:first_syllable_slice]
+            parts = [first_part]
+            for index, part_to_split in enumerate(which_parts_should_be_split):
+                if index == len(which_parts_should_be_split) - 1:
+                    parts.append(phonemes[part_to_split::])
+                else:
+                    part_to_split_which_is_ahead = which_parts_should_be_split[index + 1]
+                    parts.append(phonemes[part_to_split:part_to_split_which_is_ahead])
+        else:
+            # That means that the input is the syllable itself
+            parts = [phonemes]
+
+        return ARPANETSyllableDetails(parts, nuclei_count)
 
     @classmethod
     def apply_ipa_stress_marks_to_arpanet_phoneme(cls, phonemes: List[str]) -> List[str]:
@@ -142,8 +179,8 @@ class InternationalPhoneticAlphabet:
         # Stop searching for where stress starts if these are encountered
         stop_set = ["nasal", "fricative", "vowel"]
 
-        number_of_syllables = cls.arpanet_syllable_count(phonemes)
-        eligible_to_apply_ipa_stress = number_of_syllables > 1
+        syllable_details = cls.arpanet_syllable_count(phonemes)
+        eligible_to_apply_ipa_stress = syllable_details.count > 1
         if not eligible_to_apply_ipa_stress:
             return [cls._erase_stress_from_arpanet_phoneme(phoneme) for phoneme in phonemes]
         else:
@@ -209,7 +246,7 @@ class InternationalPhoneticAlphabet:
             return list(updated_phonemes)
 
     @classmethod
-    def ipa_format_from_arpanet(cls, phonemes: List[str]) -> List[str]:
+    def ipa_format_from_arpanet(cls, phonemes: List[str]) -> IPAConversionDetails:
         swap_list = [("ˈər", "əˈr"), ("ˈie", "iˈe")]
         phonemes_as_ipa_symbols = []
         refreshed_phonemes = cls.apply_ipa_stress_marks_to_arpanet_phoneme(phonemes)
@@ -230,7 +267,26 @@ class InternationalPhoneticAlphabet:
             if not phonemes_as_ipa_symbols[0].startswith(to_compare):
                 phonemes_as_ipa_symbols[0] = phonemes_as_ipa_symbols[0].replace(to_compare, to_swap)
 
-        return phonemes_as_ipa_symbols
+        # Now let's get the syllable details using IPA format
+        syllable_details = cls.arpanet_syllable_count(phonemes)
+        if syllable_details.count == 1:
+            # Sanity check
+            assert len(phonemes_as_ipa_symbols) == 1
+            # Simplest case
+            ipa_syllables = [phonemes_as_ipa_symbols]
+        else:
+            # Hardest case
+            ipa_syllables = []
+            where_to_start = 0
+            for syllable_part in syllable_details.syllables:
+                ipa_syllable = []
+                for index, arpanet_symbol in enumerate(syllable_part):
+                    ipa_syllable.append(phonemes_as_ipa_symbols[where_to_start + index])
+                    if index == len(syllable_part) - 1:
+                        where_to_start = where_to_start + index + 1
+                        ipa_syllables.append(ipa_syllable)
+
+        return IPAConversionDetails(phonemes, syllable_details.syllables, phonemes_as_ipa_symbols, ipa_syllables)
 
     @staticmethod
     def _erase_stress_from_arpanet_phoneme(phoneme):
