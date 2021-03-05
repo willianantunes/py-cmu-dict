@@ -67,8 +67,10 @@ def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], lan
         else:
             version = Dictionary.Version.V_4
 
+        # Better to join without spaces
         phonemic = "".join(phonemes_as_ipa_symbols)
-        phoneme = "".join(cmu_line.phonemes)
+        # Better to leave with spaces
+        phoneme = " ".join(cmu_line.phonemes)
 
         yield Dictionary(
             word_or_symbol=cmu_line.word_or_symbol,

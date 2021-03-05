@@ -24,7 +24,7 @@ def test_should_create_database_with_sample_part():
 
     abandoned_dict_entry = Dictionary.objects.get(word_or_symbol="abandoned")
 
-    assert abandoned_dict_entry.phoneme == "ah0bae1ndah0nd"
+    assert abandoned_dict_entry.phoneme == "ah0 b ae1 n d ah0 n d"
     assert abandoned_dict_entry.phonemic == "əˈbændənd"
     assert abandoned_dict_entry.phonetic is None
     assert abandoned_dict_entry.classification == Dictionary.WordClassification.UNDEFINED
