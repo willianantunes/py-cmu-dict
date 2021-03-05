@@ -1,18 +1,17 @@
 import logging
-import os
 
 from typing import Generator
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from py_cmu_dict import settings
 from py_cmu_dict.apps.core.business.CMUDatabaseHandler import CMUDatabaseHandler
 from py_cmu_dict.apps.core.business.CMUDatabaseHandler import CMULine
 from py_cmu_dict.apps.core.business.CMUDatabaseHandler import Variant
 from py_cmu_dict.apps.core.business.InternationalPhoneticAlphabet import InternationalPhoneticAlphabet
 from py_cmu_dict.apps.core.models import Dictionary
 from py_cmu_dict.apps.core.models import Language
-from py_cmu_dict.support.file_utils import number_of_lines
 from py_cmu_dict.support.iter_utils import chunker
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ class Command(BaseCommand):
         if number_of_entries <= Dictionary.objects.count():
             self.stdout.write("No need to fill the table!")
         else:
-            batch_size = int(os.getenv("DJANGO_BULK_BATCH_SIZE", 1000))
+            batch_size = getattr(settings, "DJANGO_BULK_BATCH_SIZE")
             language_model, created = Language.objects.get_or_create(language_tag="en-us")
             self.stdout.write(f"Was {language_model.language_tag} created? {created}")
 

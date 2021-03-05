@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
+import os
 
 from pathlib import Path
 
@@ -27,7 +28,7 @@ SECRET_KEY = "bjfhih3x)3kxda6$rnz=$lgny0^hw+&bl^j4q+a1ywtp=!ah=9"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -82,6 +83,8 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+DJANGO_BULK_BATCH_SIZE = int(os.getenv("DJANGO_BULK_BATCH_SIZE", 1000))
 
 
 # Password validation
