@@ -1,0 +1,5 @@
+db.*
+.venv
+.pytest_cache
+.coverage
+tests-reports

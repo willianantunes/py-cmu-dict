@@ -1,4 +1,9 @@
+from itertools import chain
 from itertools import islice
+from typing import Any
+from typing import Callable
+from typing import List
+from typing import Optional
 
 
 def chunker(iterable, size):
@@ -27,3 +32,14 @@ def chunker(iterable, size):
 
     for i in range(0, len(iterable), size):
         yield [k for k in islice(it, size)]
+
+
+def index_of_first(target_list: List, predicate: Callable[[str], bool]) -> Optional[int]:
+    for index, item in enumerate(target_list):
+        if predicate(item):
+            return index
+    return None
+
+
+def flatten(target_list: List[List[Any]]):
+    return list(chain.from_iterable(target_list))

@@ -2,6 +2,7 @@ import re
 
 from collections import deque
 from dataclasses import dataclass
+from typing import Deque
 from typing import List
 
 from py_cmu_dict.apps.core.business.exceps import MoreThanOneARPABETStressMarkException
@@ -184,7 +185,7 @@ class InternationalPhoneticAlphabet:
         if not eligible_to_apply_ipa_stress:
             return [cls._erase_stress_from_arpabet_phoneme(phoneme) for phoneme in phonemes]
         else:
-            updated_phonemes = deque()
+            updated_phonemes: Deque = deque()
             for phoneme in phonemes:
                 phoneme_last_char = phoneme[-1]
                 phoneme_eligible_to_be_evaluated = phoneme_last_char in cls.arpabet_stress_mark_to_ipa.keys()
