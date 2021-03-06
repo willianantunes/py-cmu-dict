@@ -50,8 +50,8 @@ def test_should_create_database_with_sample_part():
 
     abandoned_dict_entry = Dictionary.objects.get(word_or_symbol="abandoned")
 
-    assert abandoned_dict_entry.arpanet_phoneme == "ah0 b ae1 n d ah0 n d"
-    assert abandoned_dict_entry.arpanet_phoneme_syllables == "ah0 • b ae1 n • d ah0 n d"
+    assert abandoned_dict_entry.arpabet_phoneme == "ah0 b ae1 n d ah0 n d"
+    assert abandoned_dict_entry.arpabet_phoneme_syllables == "ah0 • b ae1 n • d ah0 n d"
     assert abandoned_dict_entry.ipa_phonemic == "ə ˈb æ n d ə n d"
     assert abandoned_dict_entry.ipa_phonemic_syllables == "ə • ˈb æ n • d ə n d"
     assert abandoned_dict_entry.ipa_phonetic is None

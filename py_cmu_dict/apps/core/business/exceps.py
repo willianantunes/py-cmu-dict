@@ -6,5 +6,5 @@ class DatabaseFileNotAvailable(Exception):
     pass
 
 
-class MoreThanOneARPANETStressMarkException(Exception):
+class MoreThanOneARPABETStressMarkException(Exception):
     pass

@@ -64,8 +64,8 @@ def _discover_rhymes_for_cmu(word_or_symbol: Dictionary, base_query_set: QuerySe
     logger.debug("Discovering rhymes through ARPABET strategy")
     # Some important variables
     arpabet_stress_mark = "1"
-    separator_mark = Dictionary.arpanet_phoneme_separator_mark
-    phonemes = word_or_symbol.arpanet_phoneme.split(separator_mark)
+    separator_mark = Dictionary.arpabet_phoneme_separator_mark
+    phonemes = word_or_symbol.arpabet_phoneme.split(separator_mark)
     # First try
     phoneme_to_be_used = None
     for index, phoneme in enumerate(phonemes):
@@ -75,7 +75,7 @@ def _discover_rhymes_for_cmu(word_or_symbol: Dictionary, base_query_set: QuerySe
     if not phoneme_to_be_used:
         return _discover_rhymes_standard_way(word_or_symbol, base_query_set)
     # Otherwise, we can try!
-    result = base_query_set.filter(arpanet_phoneme__endswith=phoneme_to_be_used)
+    result = base_query_set.filter(arpabet_phoneme__endswith=phoneme_to_be_used)
     cleaned_result = [tuple_entry[0] for tuple_entry in result.values_list("word_or_symbol")]
     return cleaned_result
 

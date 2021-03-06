@@ -69,7 +69,7 @@ class Command(BaseCommand):
 
 def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], language: Language):
     for cmu_line in cmu_line_generator:
-        result = InternationalPhoneticAlphabet.ipa_format_from_arpanet(cmu_line.phonemes)
+        result = InternationalPhoneticAlphabet.ipa_format_from_arpabet(cmu_line.phonemes)
 
         if cmu_line.variant == Variant.V1:
             version = Dictionary.Version.V_1
@@ -81,20 +81,20 @@ def _translation_to_dtos(cmu_line_generator: Generator[CMULine, None, None], lan
             version = Dictionary.Version.V_4
 
         syllable_separator_mark = Dictionary.syllable_separator_mark
-        arpanet_phoneme_separator_mark = Dictionary.arpanet_phoneme_separator_mark
+        arpabet_phoneme_separator_mark = Dictionary.arpabet_phoneme_separator_mark
         ipa_phonemic_separator_mark = Dictionary.ipa_phonemic_separator_mark
 
         # Better to join without spaces
         ipa_phonemic = ipa_phonemic_separator_mark.join(result.ipa_format)
         ipa_phonemic_syllables = Dictionary.create_syllable_entry_ipa(result.ipa_syllable)
         # Better to leave with spaces
-        arpanet_phoneme = arpanet_phoneme_separator_mark.join(result.arpanet_format)
-        arpanet_phoneme_syllables = Dictionary.create_syllable_entry_arpabet(result.arpanet_syllable)
+        arpabet_phoneme = arpabet_phoneme_separator_mark.join(result.arpabet_format)
+        arpabet_phoneme_syllables = Dictionary.create_syllable_entry_arpabet(result.arpabet_syllable)
 
         yield Dictionary(
             word_or_symbol=cmu_line.word_or_symbol,
-            arpanet_phoneme=arpanet_phoneme,
-            arpanet_phoneme_syllables=arpanet_phoneme_syllables,
+            arpabet_phoneme=arpabet_phoneme,
+            arpabet_phoneme_syllables=arpabet_phoneme_syllables,
             ipa_phonemic=ipa_phonemic,
             ipa_phonemic_syllables=ipa_phonemic_syllables,
             version=version,

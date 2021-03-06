@@ -29,7 +29,7 @@ class Language(StandardModelMixin):
 
 class Dictionary(StandardModelMixin):
     syllable_separator_mark = " • "
-    arpanet_phoneme_separator_mark = " "
+    arpabet_phoneme_separator_mark = " "
     ipa_phonemic_separator_mark = " "
 
     class Version(models.TextChoices):
@@ -70,8 +70,8 @@ class Dictionary(StandardModelMixin):
     word_or_symbol = models.CharField(max_length=45, null=False, blank=False)
     description = models.CharField(max_length=100, null=True, blank=True)
     # See more in docs/NLPA-Phon1.pdf
-    arpanet_phoneme = models.CharField(max_length=100, null=True, blank=True, verbose_name="ARPANET phoneme")
-    arpanet_phoneme_syllables = models.CharField(max_length=100, null=True, blank=True)
+    arpabet_phoneme = models.CharField(max_length=100, null=True, blank=True, verbose_name="ARPABET phoneme")
+    arpabet_phoneme_syllables = models.CharField(max_length=100, null=True, blank=True)
     # Phonemic is the hypothetical sounds
     ipa_phonemic = models.CharField(max_length=100, null=True, blank=True, verbose_name="Phonemic transcription")
     ipa_phonemic_syllables = models.CharField(max_length=100, null=True, blank=True)
@@ -105,7 +105,7 @@ class Dictionary(StandardModelMixin):
 
     @classmethod
     def create_syllable_entry_arpabet(cls, syllables: List[List[str]]) -> str:
-        return cls._create_syllable_entry(syllables, cls.arpanet_phoneme_separator_mark)
+        return cls._create_syllable_entry(syllables, cls.arpabet_phoneme_separator_mark)
 
     @classmethod
     def _create_syllable_entry(cls, syllables: List[List[str]], separator: str) -> str:
