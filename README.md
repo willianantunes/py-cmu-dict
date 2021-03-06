@@ -23,10 +23,24 @@ It's important that you know that this playground would not be possible without 
 
 The first one was indeed the game changer here.
 
-## How to run the project
+## Running the project
 
-TODO.
+Just issue the following command:
 
-## Running the tests
+    docker-compose up remote-interpreter
 
-TODO.
+You can access it through the address `http://localhost:8080/admin/`. Use `admin` for _username_ and _password_.
+
+If you'd like to run without Docker, you can install the dependencies issuing `pipenv install`. After it's completed, you can enter `pipenv shell` and then type `./scripts/start-development.sh`. After the server is up, use the same address and credentials shown above.
+
+## Running all the tests and evaluating lint
+
+For the first one you can do:
+
+    docker-compose up tests
+
+For lint:
+
+    docker-compose up lint
+
+By the way, all the tests reports will be available in `tests-reports` folder. It will be created after tests execution. Check [start-tests.sh](scripts/start-tests.sh) to understand more. 
