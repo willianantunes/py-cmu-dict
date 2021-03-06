@@ -27,13 +27,25 @@ def create_database_rhymes_3():
     call_command("seed", "--cmu-file-location", cmu_file_location, "--use-language-tag", "en-gb")
 
 
+@pytest.fixture
+def create_database_homophones_1():
+    cmu_file_location = resource_location("sample-part-homophones-1-cmudict-0.7b.txt")
+    call_command("seed", "--cmu-file-location", cmu_file_location)
+
+
+@pytest.fixture
+def create_database_homophones_2():
+    cmu_file_location = resource_location("sample-part-homophones-2-cmudict-0.7b.txt")
+    call_command("seed", "--cmu-file-location", cmu_file_location)
+
+
 @pytest.mark.django_db
 def test_should_return_rhymes_from_word_sold_with_cmu(create_database_rhymes_1):
     word_to_be_analysed, language_tag = "sold", "en-us"
 
     rhymes = discover_rhymes(word_to_be_analysed, language_tag)
 
-    assert rhymes == ["sold", "strolled", "told", "uncontrolled"]
+    assert rhymes == ["strolled", "told", "uncontrolled"]
 
 
 @pytest.mark.django_db
@@ -54,15 +66,31 @@ def test_should_return_rhymes_from_word_rhyming_without_cmu(create_database_rhym
     assert rhymes == ["roaming", "rooming", "climbing", "diming", "liming", "priming", "scheming", "timing"]
 
 
-def test_should_return_homophones_from_word_their():
-    word_to_be_analysed = "their"
+@pytest.mark.django_db
+def test_should_return_homophones_from_word_their(create_database_homophones_1):
+    word_to_be_analysed, language_tag = "their", "en-us"
 
-    homophones = discover_homophones(word_to_be_analysed)
+    homophones = discover_homophones(word_to_be_analysed, language_tag)
 
     assert len(homophones) == 2
     homophone_1 = homophones[0]
     homophone_2 = homophones[1]
     assert homophone_1.word_or_symbol == "there"
-    assert homophone_1.phonemic == "ðɛr"
+    assert homophone_1.phonemic == "ð ɛ ɹ"
     assert homophone_2.word_or_symbol == "they're"
-    assert homophone_2.phonemic == "ðɛr"
+    assert homophone_2.phonemic == "ð ɛ ɹ"
+
+
+@pytest.mark.django_db
+def test_should_return_homophones_from_word_eight(create_database_homophones_2):
+    word_to_be_analysed, language_tag = "eight", "en-us"
+
+    homophones = discover_homophones(word_to_be_analysed, language_tag)
+
+    assert len(homophones) == 2
+    homophone_1 = homophones[0]
+    homophone_2 = homophones[1]
+    assert homophone_1.word_or_symbol == "ate"
+    assert homophone_1.phonemic == "eɪ t"
+    assert homophone_2.word_or_symbol == "aydt"
+    assert homophone_2.phonemic == "eɪ t"

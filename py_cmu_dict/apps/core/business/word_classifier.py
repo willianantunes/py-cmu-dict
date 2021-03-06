@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class Homophone:
     word_or_symbol: str
-    phonemic = str
-    phonetic = str
+    phonemic: str
+    phonetic: str
 
 
 def discover_rhymes(word_or_symbol: str, language_tag: str) -> Optional[List[str]]:
@@ -27,14 +27,15 @@ def discover_rhymes(word_or_symbol: str, language_tag: str) -> Optional[List[str
         return
     else:
         word_from_database: Dictionary
+        updated_base_query_set = base_query_set.exclude(pk=word_from_database.pk)
         if not word_from_database.ipa_phonemic_syllables:
             logger.debug(f"No phonemic syllable available for {language_tag} / {word_or_symbol}")
             return
         else:
             if language_tag == "en-us":
-                return _discover_rhymes_for_cmu(word_from_database, base_query_set)
+                return _discover_rhymes_for_cmu(word_from_database, updated_base_query_set)
 
-            return _discover_rhymes_standard_way(word_from_database, base_query_set)
+            return _discover_rhymes_standard_way(word_from_database, updated_base_query_set)
 
 
 def _discover_rhymes_standard_way(word_or_symbol: Dictionary, base_query_set: QuerySet) -> Optional[List[str]]:
@@ -42,7 +43,6 @@ def _discover_rhymes_standard_way(word_or_symbol: Dictionary, base_query_set: Qu
     syllables = word_or_symbol.transform_ipa_syllable_entry_to_object()
     number_of_syllables = len(syllables)
     logger.debug(f"The word '{word_or_symbol}' has {number_of_syllables} syllables")
-    query_set_syllables = base_query_set.exclude(pk=word_or_symbol.pk)
 
     # Naive implementation!
     # For certain there is something more technical in terms of linguistics...
@@ -53,7 +53,7 @@ def _discover_rhymes_standard_way(word_or_symbol: Dictionary, base_query_set: Qu
         syllables_to_be_used = syllables[1::]
 
     syllables_to_consult_in_database = Dictionary.create_syllable_entry_ipa(syllables_to_be_used)
-    result = query_set_syllables.filter(ipa_phonemic__endswith=syllables_to_consult_in_database)
+    result = base_query_set.filter(ipa_phonemic__endswith=syllables_to_consult_in_database)
     cleaned_result = [tuple_entry[0] for tuple_entry in result.values_list("word_or_symbol")]
     logger.debug(f"Total rhymes words found: {len(cleaned_result)}")
 
@@ -80,5 +80,21 @@ def _discover_rhymes_for_cmu(word_or_symbol: Dictionary, base_query_set: QuerySe
     return cleaned_result
 
 
-def discover_homophones(word: str) -> List[Homophone]:
-    raise NotImplementedError
+def discover_homophones(word_or_symbol: str, language_tag: str) -> Optional[List[Homophone]]:
+    base_query_set = Dictionary.objects.filter(language__language_tag=language_tag)
+    word_from_database = base_query_set.filter(word_or_symbol=word_or_symbol).first()
+
+    if not word_from_database:
+        logger.debug(f"No entry for {language_tag} / {word_or_symbol}")
+        return
+    else:
+        word_from_database: Dictionary
+        updated_base_query_set = base_query_set.exclude(pk=word_from_database.pk)
+        result = updated_base_query_set.filter(ipa_phonemic__exact=word_from_database.ipa_phonemic)
+        cleaned_result = [
+            Homophone(tuple_entry[0], tuple_entry[1], tuple_entry[2])
+            for tuple_entry in result.values_list("word_or_symbol", "ipa_phonemic", "ipa_phonetic")
+        ]
+        logger.debug(f"Total homophones words found: {len(cleaned_result)}")
+
+        return cleaned_result
